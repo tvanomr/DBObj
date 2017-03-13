@@ -1,0 +1,29 @@
+    HEADERS *= $$PWD/Object.h\
+               $$PWD/TypeID.h\
+               $$PWD/ObjInfo.h\
+               $$PWD/Connection.h\
+               $$PWD/Loader.h\
+               $$PWD/ObjLink.h\
+               $$PWD/MapLink.h\
+               $$PWD/ObjEditors.h\
+               $$PWD/Editor.h\
+               $$PWD/HHelper.h\
+               $$PWD/Types.h\
+               $$PWD/ObjInfoUtil.h\
+               $$PWD/ObjLinkType.h\
+               $$PWD/ObjPtrType.h\
+               $$PWD/MapLinkType.h\
+               $$PWD/StdTypes.h\
+               $$PWD/Archive1.h\
+               $$PWD/ObjInfoSQLUtil.h\
+               $$PWD/Archive2.h\
+               $$PWD/ObjInfoUtilMapLink.h\
+               $$PWD/ObjInfoUtilObjLink.h\
+               $$PWD/ArchiveBase.h\
+               $$PWD/ArchiveCoord.h\
+               $$PWD/ArchiveKey.h\
+               $$PWD/Archive.h\
+               $$PWD/SQLUtil.h
+    SOURCES *= $$PWD/DBObjObject.cpp \
+               $$PWD/DBObjEditor.cpp
+    include($$PWD/Templates/Templates.pri)
