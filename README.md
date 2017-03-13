@@ -1,2 +1,2 @@
 # DBObj
-Store object hierarchy withing SQL database
+Store object hierarchy within an SQL database
