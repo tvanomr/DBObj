@@ -22,21 +22,21 @@ class Connection;
 template<class Conn,std::size_t Features,bool Present>
 class FillLoadersFillers;
 
-template <class Obj,class Conn,std::size_t Features>
+template <class Obj,class Conn,std::size_t Features,class Condition=void>
 class ObjLoader
 {
 
 };
 
-template<class Conn,std::size_t Features>
+template<class Conn,std::size_t Features,class Condition=void>
 class ObjLoaderBase
 {
 };
 
 
 
-template<class Conn>
-class ObjLoaderBase<Conn,0>
+template<class Conn,std::size_t Features>
+class ObjLoaderBase<Conn,Features,void>
 {
 public:
 	virtual bool Fill(Object*)=0;
@@ -44,17 +44,19 @@ public:
 	virtual ~ObjLoaderBase(){}
 };
 
-template <class Obj,class Conn>
-class ObjLoader<Obj,Conn,0> : public ObjLoaderBase<Conn,0>
+template <class Obj,class Conn,std::size_t Features>
+class ObjLoader<Obj,Conn,Features,
+      typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+   : public ObjLoaderBase<Conn,Features>
 {
 protected:
 
-	friend class FillLoadersFillers<Conn,0,true>;
+   friend class FillLoadersFillers<Conn,Features,true>;
 
-   typename TypeManip::GetIntValuesT<Obj,0>::type Values;
-   typename TypeManip::GetSpecialT<Obj,0,Conn>::type Specials;
-	Connection<Conn,0>* pConn;
-   typename Connection<Conn,0>::DBQuery LoadQ;
+   typename TypeManip::GetIntValuesT<Obj,Features>::type Values;
+   typename TypeManip::GetSpecialT<Obj,Features,Conn>::type Specials;
+   Connection<Conn,Features>* pConn;
+   typename Connection<Conn,Features>::DBQuery LoadQ;
 
    template<class Inds,std::size_t index>
    typename std::enable_if<(index<std::tuple_size<decltype(Specials)>::value),void>::type InitSpecials()
@@ -71,7 +73,7 @@ protected:
 
 	static std::string LoadQueryStr()
 	{
-      return "select "+TypeManip::CreateColumnList<typename TypeManip::GetValuesIndices<Obj,0>::type,Obj,0>()+
+      return "select "+TypeManip::CreateColumnList<typename TypeManip::GetValuesIndices<Obj,Features>::type,Obj,Features>()+
 				" from "+std::string(ObjInfo<Obj>::TableName)+" where f_guid=?1";
 	}
 
@@ -79,7 +81,7 @@ protected:
 	typename std::enable_if<size!=0,void>::type InitQueryImpl()
 	{
 		LoadQ=pConn->Query(LoadQueryStr(),"Loader::Load()");
-      TypeManipSQL::BindOargs<0,Conn,0>(LoadQ,Values);
+      TypeManipSQL::BindOargs<0,Conn,Features>(LoadQ,Values);
 	}
 
 	template<std::size_t size>
@@ -95,7 +97,7 @@ protected:
 		LoadQ.exec();
 		if(LoadQ.next())
 		{
-         TypeManipSQL::MoveValues<typename TypeManip::GetValuesIndices<Obj,0>::type,0>(static_cast<Obj*>(pObj),Values,pConn);
+         TypeManipSQL::MoveValues<typename TypeManip::GetValuesIndices<Obj,Features>::type,0>(static_cast<Obj*>(pObj),Values,pConn);
 			return true;
 		}
 		return false;
@@ -127,27 +129,33 @@ public:
 	Object* Create();
 };
 
-template<class Obj,class Conn>
-void ObjLoader<Obj,Conn,0>::InitQuery()
+template<class Obj,class Conn,std::size_t Features>
+void ObjLoader<Obj,Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::InitQuery()
 {
    InitQueryImpl<std::tuple_size<decltype(Values)>::value>();
    InitSpecials<typename TypeManip::GetSpecialIndices<Obj,0,Conn>::type,0>();
 }
 
-template<class Obj,class Conn>
-Object* ObjLoader<Obj,Conn,0>::Create()
+template<class Obj,class Conn,std::size_t Features>
+Object* ObjLoader<Obj,Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::Create()
 {
 	return new Obj;
 }
 
-template<class Obj,class Conn>
-bool ObjLoader<Obj,Conn,0>::Fill(Object* pObj)
+template<class Obj,class Conn,std::size_t Features>
+bool ObjLoader<Obj,Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::Fill(Object* pObj)
 {
 	if(Obj::ParentTypeID==TypeID::TypeInvalid||pConn->FillObj(Obj::ParentTypeID,pObj))
 	{
       if(LoadValues<std::tuple_size<decltype(Values)>::value>(pObj))
 		{
-         InitObjSpecials<typename TypeManip::GetSpecialIndices<Obj,0,Conn>::type,0>(static_cast<Obj*>(pObj));
+         InitObjSpecials<typename TypeManip::GetSpecialIndices<Obj,Features,Conn>::type,0>(static_cast<Obj*>(pObj));
 			return true;
 		}
 	}
@@ -168,30 +176,31 @@ public:
 	static constexpr bool value=(sizeof(yes)==sizeof(test(static_cast<GetObjTypeByID<ObjTypeID>*>(nullptr))));
 };
 
-template<class Conn,std::size_t Features,bool Present>
+template<class Conn,std::size_t Features,bool Present,class Condition=void>
 struct FillLoadersFillers
 {
 
 };
 
-template<class Conn>
-struct FillLoadersFillers<Conn,0,true>
+template<class Conn,std::size_t Features>
+struct FillLoadersFillers<Conn,Features,true,
+      typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
 {
 	template<std::size_t LastTypeID>
 	static typename std::enable_if<LastTypeID==TypeID::TypeInvalid,
-	std::vector<ObjLoaderBase<Conn,0>*>>::type FillLoaders(Connection<Conn,0>*)
+   std::vector<ObjLoaderBase<Conn,Features>*>>::type FillLoaders(Connection<Conn,Features>*)
 	{
-		return std::vector<ObjLoaderBase<Conn,0>*>();
+      return std::vector<ObjLoaderBase<Conn,Features>*>();
 	}
 
 	template<std::size_t LastTypeID>
 	static typename std::enable_if<LastTypeID!=TypeID::TypeInvalid,
-	std::vector<ObjLoaderBase<Conn,0>*>>::type FillLoaders(Connection<Conn,0>* pConn)
+   std::vector<ObjLoaderBase<Conn,Features>*>>::type FillLoaders(Connection<Conn,Features>* pConn)
 	{
-		std::vector<ObjLoaderBase<Conn,0>*> lc=
-				std::move(FillLoadersFillers<Conn,0,ObjTypePresent<LastTypeID-1>::value>::template FillLoaders<LastTypeID-1>(pConn));
-		ObjLoader<typename GetObjTypeByID<LastTypeID>::type,Conn,0>* pLoader=
-				new ObjLoader<typename GetObjTypeByID<LastTypeID>::type,Conn,0>();
+      std::vector<ObjLoaderBase<Conn,Features>*> lc=
+            std::move(FillLoadersFillers<Conn,Features,ObjTypePresent<LastTypeID-1>::value>::template FillLoaders<LastTypeID-1>(pConn));
+      ObjLoader<typename GetObjTypeByID<LastTypeID>::type,Conn,Features>* pLoader=
+            new ObjLoader<typename GetObjTypeByID<LastTypeID>::type,Conn,Features>();
 		if(pLoader)
 		{
 			pLoader->pConn=pConn;
@@ -203,22 +212,23 @@ struct FillLoadersFillers<Conn,0,true>
 	}
 };
 
-template<class Conn>
-struct FillLoadersFillers<Conn,0,false>
+template<class Conn,std::size_t Features>
+struct FillLoadersFillers<Conn,Features,false,
+      typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
 {
 	template<std::size_t LastTypeID>
 	static typename std::enable_if<LastTypeID==TypeID::TypeInvalid,
-	std::vector<ObjLoaderBase<Conn,0>*>>::type FillLoaders(Connection<Conn,0>*)
+   std::vector<ObjLoaderBase<Conn,Features>*>>::type FillLoaders(Connection<Conn,Features>*)
 	{
-		return std::vector<ObjLoaderBase<Conn,0>*>();
+      return std::vector<ObjLoaderBase<Conn,Features>*>();
 	}
 
 	template<std::size_t LastTypeID>
 	static typename std::enable_if<LastTypeID!=TypeID::TypeInvalid,
-	std::vector<ObjLoaderBase<Conn,0>*>>::type FillLoaders(Connection<Conn,0>* pConn)
+   std::vector<ObjLoaderBase<Conn,Features>*>>::type FillLoaders(Connection<Conn,Features>* pConn)
 	{
-		std::vector<ObjLoaderBase<Conn,0>*> lc=
-				std::move(FillLoadersFillers<Conn,0,ObjTypePresent<LastTypeID-1>::value>::template FillLoaders<LastTypeID-1>(pConn));
+      std::vector<ObjLoaderBase<Conn,Features>*> lc=
+            std::move(FillLoadersFillers<Conn,Features,ObjTypePresent<LastTypeID-1>::value>::template FillLoaders<LastTypeID-1>(pConn));
 		lc.push_back(nullptr);
 		printd7("Not adding loader for type %u\n",LastTypeID);
 		return lc;

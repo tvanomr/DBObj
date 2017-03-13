@@ -10,14 +10,15 @@ namespace DBObj
 template<class Obj,class Conn,std::size_t Features,class Condition=void>
 class ArchiveKeyBase: public virtual ArchiveBase<Obj,Conn,Features>{};
 
-template<class Obj,class Conn>
-class ArchiveKeyBase<Obj,Conn,0,
-      typename std::enable_if<TypeManip::HavePropIndices<Obj,ValueType::Key,ValueType::KeyRange>::value,void>::type>
-      : public virtual ArchiveBase<Obj,Conn,0>
+template<class Obj,class Conn,std::size_t Features>
+class ArchiveKeyBase<Obj,Conn,Features,
+      typename std::enable_if<(TypeManip::HavePropIndices<Obj,ValueType::Key,ValueType::KeyRange>::value &&
+                               HaveFeature(Features,DBObj::Features::SQL)),void>::type>
+      : public virtual ArchiveBase<Obj,Conn,Features>
 {
 protected:
    typedef typename TypeManip::GetPropIndices<Obj,ValueType::Key,ValueType::KeyRange> KeyIndices;
-   QueryStorage<Conn,0,GenTempl::Length<typename KeyIndices::values>::value> KeyQueries;
+   QueryStorage<Conn,Features,GenTempl::Length<typename KeyIndices::values>::value> KeyQueries;
 public:
    template<std::size_t... inds,class... Types>
    typename std::enable_if<GenTempl::IsUniqueSeq<inds...>::value &&
@@ -43,43 +44,44 @@ public:
 template<class Obj,class Conn,std::size_t Features,class Condition=void>
 class ArchiveKey: public ArchiveKeyBase<Obj,Conn,Features>{};
 
-template<class Obj,class Conn>
-class ArchiveKey<Obj,Conn,0,
-      typename std::enable_if<TypeManip::HavePropIndices<Obj,ValueType::Key,ValueType::KeyRange>::value,void>::type>
-      : public ArchiveKeyBase<Obj,Conn,0>
+template<class Obj,class Conn,std::size_t Features>
+class ArchiveKey<Obj,Conn,Features,
+      typename std::enable_if<(TypeManip::HavePropIndices<Obj,ValueType::Key,ValueType::KeyRange>::value &&
+                               HaveFeature(Features,DBObj::Features::SQL)),void>::type>
+      : public ArchiveKeyBase<Obj,Conn,Features>
 {
 protected:
-   typename Connection<Conn,0>::DBQuery CheckExistQ;
-   typename Connection<Conn,0>::DBQuery UpdateQ;
+   typename Connection<Conn,Features>::DBQuery CheckExistQ;
+   typename Connection<Conn,Features>::DBQuery UpdateQ;
    std::int64_t count;
-   using typename ArchiveKeyBase<Obj,Conn,0>::KeyIndices;
-   using typename ArchiveBase<Obj,Conn,0>::ValuesIndices;
-   QueryStorage<Conn,0,GenTempl::Length<typename KeyIndices::values>::value> KeyDeleteQueries;
+   using typename ArchiveKeyBase<Obj,Conn,Features>::KeyIndices;
+   using typename ArchiveBase<Obj,Conn,Features>::ValuesIndices;
+   QueryStorage<Conn,Features,GenTempl::Length<typename KeyIndices::values>::value> KeyDeleteQueries;
 public:
-   void InitQueries(Connection<Conn,0>* pConnection)
+   void InitQueries(Connection<Conn,Features>* pConnection)
    {
-      ArchiveKeyBase<Obj,Conn,0>::InitQueries(pConnection);
+      ArchiveKeyBase<Obj,Conn,Features>::InitQueries(pConnection);
       CheckExistQ=this->pConn->Query(std::string("select count(")+std::get<GenTempl::Get<typename KeyIndices::indices,0>::value>(ObjInfo<Obj>::info).ColumnName+
                                      TypeManipSQL::GetEqualClause<Obj,typename KeyIndices::indices>(),"ArchiveKey::Insert()");
       UpdateQ=this->pConn->Query("update "+std::string(ObjInfo<Obj>::TableName)+" set "+
-                                 TypeManip::CreateUpdateList<ValuesIndices,Obj,0>(1)+
+                                 TypeManip::CreateUpdateList<ValuesIndices,Obj,Features>(1)+
                                  TypeManipSQL::GetEqualClause<Obj,typename KeyIndices::indices>(),"ArchiveKey::Insert()");
       CheckExistQ.oarg(count);
    }
    void Insert(Obj& obj)
    {
-      TypeManipSQL::ArgAll<KeyIndices,Conn,0>(&obj,CheckExistQ);
+      TypeManipSQL::ArgAll<KeyIndices,Conn,Features>(&obj,CheckExistQ);
       count=0;
       CheckExistQ.exec();
       CheckExistQ.next();
       if(count>0)
       {
-         TypeManipSQL::ArgAll<ValuesIndices,Conn,0>(&obj,UpdateQ);
-         TypeManipSQL::ArgAll<KeyIndices,Conn,0>(&obj,UpdateQ);
+         TypeManipSQL::ArgAll<ValuesIndices,Conn,Features>(&obj,UpdateQ);
+         TypeManipSQL::ArgAll<KeyIndices,Conn,Features>(&obj,UpdateQ);
          UpdateQ.exec();
       }
       else
-         ArchiveBase<Obj,Conn,0>::Insert(obj);
+         ArchiveBase<Obj,Conn,Features>::Insert(obj);
    }
 
    template<std::size_t... inds,class... Types>
@@ -98,7 +100,7 @@ public:
    void CheckTable()
    {
       DB::ConnectionBase::PLAINCOLUMNS cols;
-      TypeManipSQL::GetColumnInfo<Obj,0,ValuesIndices>(cols);
+      TypeManipSQL::GetColumnInfo<Obj,Features,ValuesIndices>(cols);
       this->pConn->CheckTable(ObjInfo<Obj>::TableName,cols,TypeManipSQL::GetColumnList<Obj,typename TypeManip::GetPropIndicesByValues<Obj,typename GenTempl::SortUniqueValues<typename KeyIndices::values>::type>::type>());
    }
 };

@@ -23,13 +23,13 @@ public:
 };
 
 
-template <class Parent,class Child,std::size_t index,class Conn,std::size_t Features>
+template <class Parent,class Child,std::size_t index,class Conn,std::size_t Features,class Condition=void>
 class ObjLinkLoader
 {
 
 };
 
-template<class Parent,class Child,std::size_t index,class Conn,std::size_t Features>
+template<class Parent,class Child,std::size_t index,class Conn,std::size_t Features,class Condition=void>
 class ChildrenLoader
 {
 

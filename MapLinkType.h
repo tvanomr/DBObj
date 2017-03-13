@@ -8,8 +8,10 @@
 namespace DBObj
 {
 
-template<class Key,class Parent,class Child,std::size_t index,class Conn>
-class ChildrenMapLoader<Key,Parent,Child,index,Conn,0> : public ChildrenMapLoaderBase<Key,Child>
+template<class Key,class Parent,class Child,std::size_t index,class Conn,std::size_t Features>
+class ChildrenMapLoader<Key,Parent,Child,index,Conn,Features,
+      typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+   : public ChildrenMapLoaderBase<Key,Child>
 {
 protected:
    template<class T,std::size_t ind=0>
@@ -35,15 +37,17 @@ protected:
    typename Conn::DBQuery LoadAllQ;
    std::size_t id;
    Key key;
-   Connection<Conn,0>* pConn;
+   Connection<Conn,Features>* pConn;
 public:
    void InitQueries(Connection<Conn,0>* pConnection);
    Child* LoadOne(const Key&,std::size_t) override;
    void LoadAll(std::map<Key,Child*>&,std::size_t) override;
 };
 
-template<class Key,class Parent,class Child,std::size_t index,class Conn>
-void ChildrenMapLoader<Key,Parent,Child,index,Conn,0>::InitQueries(Connection<Conn,0>* pConnection)
+template<class Key,class Parent,class Child,std::size_t index,class Conn,std::size_t Features>
+void ChildrenMapLoader<Key,Parent,Child,index,Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::InitQueries(Connection<Conn,0>* pConnection)
 {
    pConn=pConnection;
    LoadOneQ=pConn->Query(std::string("select f_guid from ")+ObjInfo<Child>::TableName+
@@ -61,8 +65,10 @@ void ChildrenMapLoader<Key,Parent,Child,index,Conn,0>::InitQueries(Connection<Co
    LoadAllQ.oarg(id,key);
 }
 
-template<class Key,class Parent,class Child,std::size_t index,class Conn>
-Child* ChildrenMapLoader<Key,Parent,Child,index,Conn,0>::LoadOne(const Key & Value,std::size_t ParentID)
+template<class Key,class Parent,class Child,std::size_t index,class Conn,std::size_t Features>
+Child* ChildrenMapLoader<Key,Parent,Child,index,Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::LoadOne(const Key & Value,std::size_t ParentID)
 {
    LoadOneQ.arg(ParentID,Value);
    LoadOneQ.exec();
@@ -71,8 +77,10 @@ Child* ChildrenMapLoader<Key,Parent,Child,index,Conn,0>::LoadOne(const Key & Val
    return nullptr;
 }
 
-template<class Key,class Parent,class Child,std::size_t index,class Conn>
-void ChildrenMapLoader<Key,Parent,Child,index,Conn,0>::LoadAll(std::map<Key, Child *>& children, std::size_t ParentID)
+template<class Key,class Parent,class Child,std::size_t index,class Conn,std::size_t Features>
+void ChildrenMapLoader<Key,Parent,Child,index,Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::LoadAll(std::map<Key, Child *>& children, std::size_t ParentID)
 {
    children.clear();
    LoadAllQ.arg(ParentID);
@@ -85,11 +93,12 @@ void ChildrenMapLoader<Key,Parent,Child,index,Conn,0>::LoadAll(std::map<Key, Chi
    }
 }
 
-template<class Key,class Parent,class Child,std::size_t index,class Conn>
-class MapLinkLoader<Key,Parent,Child,index,Conn,0>
+template<class Key,class Parent,class Child,std::size_t index,class Conn,std::size_t Features>
+class MapLinkLoader<Key,Parent,Child,index,Conn,Features,
+      typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
 {
 public:
-   static void SetParentPtr(MapLink<Key,Parent,Child,index>& link,std::size_t id,Connection<Conn,0>* pConn)
+   static void SetParentPtr(MapLink<Key,Parent,Child,index>& link,std::size_t id,Connection<Conn,Features>* pConn)
    {
       link.pParent=pConn->template GetTempPtr<Parent>(id);
    }
@@ -98,39 +107,42 @@ public:
 namespace TypeManip
 {
 
-template<class Key,class Parent,class Child,std::size_t index>
-struct TypeInfo<MapLink<Key,Parent,Child,index>,0,void>
+template<class Key,class Parent,class Child,std::size_t index,std::size_t Features>
+struct TypeInfo<MapLink<Key,Parent,Child,index>,Features,
+      typename std::enable_if<HaveFeature(Features,DBObj::Features::Connections),void>::type>
 {
    typedef std::tuple<Key,std::size_t> IntType;
    static constexpr const char* Suffixes[2]={"_key",""};
    template<class Conn,class Values,std::size_t _index>
-   static void MoveValue(MapLink<Key,Parent,Child,index>& value,Values& values,Connection<Conn,0>* pConn)
+   static void MoveValue(MapLink<Key,Parent,Child,index>& value,Values& values,Connection<Conn,Features>* pConn)
    {
-      MapLinkLoader<Key,Parent,Child,index,Conn,0>::SetParentPtr(value,std::get<_index+1>(values),pConn);
+      MapLinkLoader<Key,Parent,Child,index,Conn,Features>::SetParentPtr(value,std::get<_index+1>(values),pConn);
    }
    template<class Conn>
-   static void Arg(const MapLink<Key,Parent,Child,index>& value,typename Connection<Conn,0>::DBQuery& query)
+   static void Arg(const MapLink<Key,Parent,Child,index>& value,typename Connection<Conn,Features>::DBQuery& query)
    {
       query.arg(value.GetKey(),value.GetID());
    }
 };
 
-template<class Key,class Parent,class Child,std::size_t index>
-constexpr const char* TypeInfo<MapLink<Key,Parent,Child,index>,0,void>::Suffixes[2];
+template<class Key,class Parent,class Child,std::size_t index,std::size_t Features>
+constexpr const char* TypeInfo<MapLink<Key,Parent,Child,index>,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::Connections),void>::type>::Suffixes[2];
 
-template<class Key,class Child,std::size_t index>
-struct TypeInfo<ChildrenMap<Key,Child,index>,0,void>
+template<class Key,class Child,std::size_t index,std::size_t Features>
+struct TypeInfo<ChildrenMap<Key,Child,index>,Features,
+      typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
 {
    template<class Conn,class Parent>
    struct Special
    {
-      ChildrenMapLoader<Key,Parent,Child,index,Conn,0> Loader;
+      ChildrenMapLoader<Key,Parent,Child,index,Conn,Features> Loader;
       template<std::size_t ind>
-      void Init(Connection<Conn,0>* pConn)
+      void Init(Connection<Conn,Features>* pConn)
       {
          Loader.InitQueries(pConn);
       }
-      void InitProp(std::size_t,ChildrenMap<Key,Child,index>& prop,Connection<Conn,0>*)
+      void InitProp(std::size_t,ChildrenMap<Key,Child,index>& prop,Connection<Conn,Features>*)
       {
          Loader.Attach(prop);
       }

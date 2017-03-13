@@ -23,13 +23,13 @@ public:
    void Attach(ChildrenMap<Key,Child,index>& children);
 };
 
-template<class Key,class Parent,class Child,std::size_t index,class Conn,std::size_t Features>
+template<class Key,class Parent,class Child,std::size_t index,class Conn,std::size_t Features,class Condition=void>
 class ChildrenMapLoader
 {
 
 };
 
-template<class Key,class Parent,class Child,std::size_t index,class Conn,std::size_t Features>
+template<class Key,class Parent,class Child,std::size_t index,class Conn,std::size_t Features,class Condition=void>
 class MapLinkLoader
 {
 
@@ -230,7 +230,7 @@ bool MapLink<Key,Parent,Child,index>::SetParent(Parent* pParentPtr)
 		{
 			Key key;
 			if(GetMap(pParent).FindChild(pChild,key))
-			{
+         {SpecialEds
 				if(pParentPtr)
 					if(!GetMap(pParentPtr).AddChild(key,pChild))
 						return false;

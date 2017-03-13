@@ -4,30 +4,34 @@
 #include "DBObj/Object.h"
 #include "DBObj/Types.h"
 #include "DBObj/Connection.h"
+#include <type_traits>
 
 namespace DBObj
 {
 namespace TypeManip
 {
 
-template<class Obj>
-struct TypeInfo<ObjPtr<Obj>,0,void>
+template<class Obj,std::size_t Features>
+struct TypeInfo<ObjPtr<Obj>,Features,
+      typename std::enable_if<HaveFeature(Features,DBObj::Features::Connections),void>::type>
 {
    typedef std::tuple<std::size_t> IntType;
    template<class Conn,class Values,std::size_t index>
-   static void MoveValue(ObjPtr<Obj>& value,Values& values,Connection<Conn,0>* pConn)
+   static void MoveValue(ObjPtr<Obj>& value,Values& values,Connection<Conn,Features>* pConn)
    {
       value=pConn->template GetObjPtr<Obj>(std::get<index>(values));
    }
    template<class Conn>
-   static void Arg(const ObjPtr<Obj>& value,typename Connection<Conn,0>::DBQuery& query)
+   static void Arg(const ObjPtr<Obj>& value,typename Connection<Conn,Features>::DBQuery& query)
    {
       query.arg(value.GetID());
    }
 };
 
-template<class Obj>
-struct TypeInfo<Obj*,0,typename std::enable_if<std::is_base_of<Object,Obj>::value,void>::type>
+template<class Obj,std::size_t Features>
+struct TypeInfo<Obj*,Features,
+      typename std::enable_if<std::is_base_of<Object,Obj>::value &&
+      HaveFeature(Features,DBObj::Features::Connections),void>::type>
 {
    typedef std::tuple<std::size_t> IntType;
    template<class Conn,class Values,std::size_t index>

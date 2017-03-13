@@ -10,14 +10,15 @@ namespace DBObj
 template<class Obj,class Conn,std::size_t Features,class Condition=void>
 class ArchiveCoord : public virtual ArchiveBase<Obj,Conn,Features>{};
 
-template<class Obj,class Conn>
-class ArchiveCoord<Obj,Conn,0,
-      typename std::enable_if<TypeManip::HavePropIndices<Obj,ValueType::Coord1,ValueType::CoordRange>::value,void>::type>
-      : public virtual ArchiveBase<Obj,Conn,0>
+template<class Obj,class Conn,std::size_t Features>
+class ArchiveCoord<Obj,Conn,Features,
+      typename std::enable_if<(TypeManip::HavePropIndices<Obj,ValueType::Coord1,ValueType::CoordRange>::value &&
+                               HaveFeature(Features,DBObj::Features::SQL)),void>::type>
+      : public virtual ArchiveBase<Obj,Conn,Features>
 {
 protected:
    typedef typename TypeManip::GetPropIndices<Obj,ValueType::Coord1,ValueType::CoordRange> CoordIndices;
-   QueryStorage<Conn,0,GenTempl::Length<typename CoordIndices::values>::value> CoordQueries,DeleteQueries;
+   QueryStorage<Conn,Features,GenTempl::Length<typename CoordIndices::values>::value> CoordQueries,DeleteQueries;
 public:
    template<std::size_t... inds,class... Types>
    typename std::enable_if<GenTempl::IsUniqueSeq<inds...>::value &&

@@ -17,13 +17,13 @@ class Archive1{};
 template<class Obj,class Conn,std::size_t Features,class Condition=void>
 class Archive1ID{};
 
-template<class Obj,class Conn>
-class ArchiveCoord<Obj,Conn,0>
+template<class Obj,class Conn,std::size_t Features>
+class ArchiveCoord<Obj,Conn,Features,
+      typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
 {
 protected:
 
-
-   typename Connection<Conn,0>::DBQuery SelectCoordQ,*CurrentQ=nullptr;
+   typename Connection<Conn,Features>::DBQuery SelectCoordQ,*CurrentQ=nullptr;
    virtual std::string OrderClause()=0;
 public:
    template<std::size_t ind,std::size_t... inds,class Type,class... Types>
@@ -36,15 +36,15 @@ public:
    std::enable_if<TypeManip::HavePropIndices<Obj,ValueType::Coord1,ValueType::CoordRange>::value,void>::type
       LoadCoordStart(const Type& From,const Type& To,const std::string& Order=std::string(),bool bAsc=true)
    {
-      SelectCoordQ=pConn->Query("select "+TypeManip::CreateColumnList<typename TypeManip::GetValuesIndices<Obj,0>::type,Obj,0>()+
+      SelectCoordQ=pConn->Query("select "+TypeManip::CreateColumnList<typename TypeManip::GetValuesIndices<Obj,Features>::type,Obj,Features>()+
                                 " from "+std::string(ObjInfo<Obj>::TableName)+" where "+
                                 std::get<TypeManip::GetPropIndex<Obj,ValueType::Coord1>::value>(ObjInfo<Obj>::info).ColumnName+
                                 std::string(">=?1 and ")+
                                 std::get<TypeManip::GetPropIndex<Obj,ValueType::Coord1>::value>(ObjInfo<Obj>::info).ColumnName+
                                 std::string("<=?2")+OrderClause(), "ArchiveCoord::LoadCoord1()");
-      TypeManipSQL::BindOargs<0,Conn,0>(LoadQ,values);
-      TypeManip::TypeInfo<Type,0>::template Arg<Conn>(From,SelectCoordQ);
-      TypeManip::TypeInfo<Type,0>::template Arg<Conn>(To,SelectCoordQ);
+      TypeManipSQL::BindOargs<0,Conn,Features>(LoadQ,values);
+      TypeManip::TypeInfo<Type,Features>::template Arg<Conn>(From,SelectCoordQ);
+      TypeManip::TypeInfo<Type,Features>::template Arg<Conn>(To,SelectCoordQ);
       SelectCoordQ.exec();
       CurrentQ=&SelectCoordQ;
    }
@@ -53,15 +53,15 @@ public:
    std::enable_if<TypeManip::HavePropIndex<Obj,ValueType::Coord2>::value,void>::type
       LoadCoord2Start(const Type& From,const Type& To,const std::string& Order=std::string(),bool bAsc=true)
    {
-      SelectCoordQ=pConn->Query("select "+TypeManip::CreateColumnList<typename TypeManip::GetValuesIndices<Obj,0>::type,Obj,0>()+
+      SelectCoordQ=pConn->Query("select "+TypeManip::CreateColumnList<typename TypeManip::GetValuesIndices<Obj,Features>::type,Obj,Features>()+
                                 " from "+std::string(ObjInfo<Obj>::TableName)+" where "+
                                 std::get<TypeManip::GetPropIndex<Obj,ValueType::Coord2>::value>(ObjInfo<Obj>::info).ColumnName+
                                 std::string(">=?1 and ")+
                                 std::get<TypeManip::GetPropIndex<Obj,ValueType::Coord2>::value>(ObjInfo<Obj>::info).ColumnName+
                                 std::string("<=?2")+OrderClause(), "ArchiveCoord::LoadCoord1()");
-      TypeManipSQL::BindOargs<0,Conn,0>(LoadQ,values);
-      TypeManip::TypeInfo<Type,0>::template Arg<Conn>(From,SelectCoordQ);
-      TypeManip::TypeInfo<Type,0>::template Arg<Conn>(To,SelectCoordQ);
+      TypeManipSQL::BindOargs<0,Conn,Features>(LoadQ,values);
+      TypeManip::TypeInfo<Type,Features>::template Arg<Conn>(From,SelectCoordQ);
+      TypeManip::TypeInfo<Type,Features>::template Arg<Conn>(To,SelectCoordQ);
       SelectCoordQ.exec();
       CurrentQ=&SelectCoordQ;
    }
@@ -70,43 +70,45 @@ public:
    std::enable_if<TypeManip::HavePropIndex<Obj,ValueType::Coord3>::value,void>::type
       LoadCoord3Start(const Type& From,const Type& To,const std::string& Order=std::string(),bool bAsc=true)
    {
-      SelectCoordQ=pConn->Query("select "+TypeManip::CreateColumnList<typename TypeManip::GetValuesIndices<Obj,0>::type,Obj,0>()+
+      SelectCoordQ=pConn->Query("select "+TypeManip::CreateColumnList<typename TypeManip::GetValuesIndices<Obj,Features>::type,Obj,Features>()+
                                 " from "+std::string(ObjInfo<Obj>::TableName)+" where "+
                                 std::get<TypeManip::GetPropIndex<Obj,ValueType::Coord2>::value>(ObjInfo<Obj>::info).ColumnName+
                                 std::string(">=?1 and ")+
                                 std::get<TypeManip::GetPropIndex<Obj,ValueType::Coord2>::value>(ObjInfo<Obj>::info).ColumnName+
                                 std::string("<=?2")+OrderClause(), "ArchiveCoord::LoadCoord1()");
-      TypeManipSQL::BindOargs<0,Conn,0>(LoadQ,values);
-      TypeManip::TypeInfo<Type,0>::template Arg<Conn>(From,SelectCoordQ);
-      TypeManip::TypeInfo<Type,0>::template Arg<Conn>(To,SelectCoordQ);
+      TypeManipSQL::BindOargs<0,Conn,Features>(LoadQ,values);
+      TypeManip::TypeInfo<Type,Features>::template Arg<Conn>(From,SelectCoordQ);
+      TypeManip::TypeInfo<Type,Features>::template Arg<Conn>(To,SelectCoordQ);
       SelectCoordQ.exec();
       CurrentQ=&SelectCoordQ;
    }
 
 };
 
-template<class Obj,class Conn>
-class Archive1<Obj,Conn,0,typename std::enable_if<TypeManip::HavePropIndex<Obj,ValueType::Key>::value,void>::type>
+template<class Obj,class Conn,std::size_t Features>
+class Archive1<Obj,Conn,Features,
+      typename std::enable_if<(TypeManip::HavePropIndex<Obj,ValueType::Key>::value &&
+                               HaveFeature(Features,DBObj::Features::SQL)),void>::type>
 {
 protected:
-   typedef typename TypeManip::GetValuesIndices<Obj,0>::type ValuesIndices;
-   typename TypeManip::GetIntValuesT<Obj,0>::type values;
-   typename Connection<Conn,0>::DBQuery LoadQ,InsertQ,DeleteQ;
-   Connection<Conn,0>* pConn;
+   typedef typename TypeManip::GetValuesIndices<Obj,Features>::type ValuesIndices;
+   typename TypeManip::GetIntValuesT<Obj,Features>::type values;
+   typename Connection<Conn,Features>::DBQuery LoadQ,InsertQ,DeleteQ;
+   Connection<Conn,Features>* pConn;
    static constexpr std::size_t index=TypeManip::GetPropIndex<Obj,ValueType::Key>::value;
 public:
-   void InitQueries(Connection<Conn,0>* pConnection)
+   void InitQueries(Connection<Conn,Features>* pConnection)
    {
       pConn=pConnection;
-      LoadQ=pConn->Query("select "+TypeManip::CreateColumnList<typename TypeManip::GetValuesIndices<Obj,0>::type,Obj,0>()+
+      LoadQ=pConn->Query("select "+TypeManip::CreateColumnList<typename TypeManip::GetValuesIndices<Obj,Features>::type,Obj,Features>()+
                          " from "+std::string(ObjInfo<Obj>::TableName)+" where "+
                          std::get<index>(ObjInfo<Obj>::info).ColumnName+std::string(">=?1 and ")+
                          std::get<index>(ObjInfo<Obj>::info).ColumnName+std::string("<=?2"),
                          "Archive1::Load()");
-      TypeManipSQL::BindOargs<0,Conn,0>(LoadQ,values);
+      TypeManipSQL::BindOargs<0,Conn,Features>(LoadQ,values);
       InsertQ=pConn->Query("insert into "+std::string(ObjInfo<Obj>::TableName)+"("+
-                           TypeManip::CreateColumnList<typename TypeManip::GetValuesIndices<Obj,0>::type,Obj,0>()+
-                           ") values ("+TypeManip::CreatePlaceholderList<typename TypeManip::GetValuesIndices<Obj,0>::type,Obj,0>(1)+")",
+                           TypeManip::CreateColumnList<typename TypeManip::GetValuesIndices<Obj,Features>::type,Obj,Features>()+
+                           ") values ("+TypeManip::CreatePlaceholderList<typename TypeManip::GetValuesIndices<Obj,Features>::type,Obj,Features>(1)+")",
                            "Archive1::Insert()");
       DeleteQ=pConn->Query("delete from "+std::string(ObjInfo<Obj>::TableName)+" where "+
                            std::get<index>(ObjInfo<Obj>::info).ColumnName+">=?1 and "+
@@ -117,8 +119,8 @@ public:
    template<class Type>
    void LoadStart(const Type& From,const Type& To)
    {
-      TypeManip::TypeInfo<Type,0>::template Arg<Conn>(From,LoadQ);
-      TypeManip::TypeInfo<Type,0>::template Arg<Conn>(To,LoadQ);
+      TypeManip::TypeInfo<Type,Features>::template Arg<Conn>(From,LoadQ);
+      TypeManip::TypeInfo<Type,Features>::template Arg<Conn>(To,LoadQ);
       LoadQ.exec();
    }
 
@@ -153,14 +155,14 @@ public:
 
    void Insert(Obj& obj)
    {
-      TypeManipSQL::ArgAll<ValuesIndices,Conn,0>(&obj,InsertQ);
+      TypeManipSQL::ArgAll<ValuesIndices,Conn,Features>(&obj,InsertQ);
       InsertQ.exec();
    }
 
    void CheckTable()
    {
       DB::ConnectionBase::PLAINCOLUMNS cols;
-      TypeManipSQL::GetColumnInfo<Obj,0,ValuesIndices>(cols);
+      TypeManipSQL::GetColumnInfo<Obj,Features,ValuesIndices>(cols);
       pConn->CheckTable(ObjInfo<Obj>::TableName,cols,{std::string(std::get<index>(ObjInfo<Obj>::info).ColumnName)});
    }
 
@@ -170,30 +172,33 @@ public:
    }
 };
 
-template<class Obj,class Conn>
-class Archive1ID<Obj,Conn,0,typename std::enable_if<TypeManip::HavePropIndex<Obj,ValueType::Parent>::value && TypeManip::HavePropIndex<Obj,ValueType::Key>::value,void>::type>
+template<class Obj,class Conn,std::size_t Features>
+class Archive1ID<Obj,Conn,Features,
+      typename std::enable_if<(TypeManip::HavePropIndex<Obj,ValueType::Parent>::value &&
+                               TypeManip::HavePropIndex<Obj,ValueType::Key>::value &&
+                               HaveFeature(Features,DBObj::Features::SQL)),void>::type>
 {
 protected:
-   typedef typename TypeManip::GetValuesIndices<Obj,0>::type ValuesIndices;
+   typedef typename TypeManip::GetValuesIndices<Obj,Features>::type ValuesIndices;
    static constexpr std::size_t IDIndex=TypeManip::GetPropIndex<Obj,ValueType::Parent>::value;
    static constexpr std::size_t KeyIndex=TypeManip::GetPropIndex<Obj,ValueType::Key>::value;
-   typename TypeManip::GetIntValuesT<Obj,0>::type values;
-   typename Connection<Conn,0>::DBQuery LoadQ,InsertQ,DeleteQ,DeleteByIDQ;
-   Connection<Conn,0>* pConn;
+   typename TypeManip::GetIntValuesT<Obj,Features>::type values;
+   typename Connection<Conn,Features>::DBQuery LoadQ,InsertQ,DeleteQ,DeleteByIDQ;
+   Connection<Conn,Features>* pConn;
 public:
-   void InitQueries(Connection<Conn,0>* pConnection)
+   void InitQueries(Connection<Conn,Features>* pConnection)
    {
       pConn=pConnection;
-      LoadQ=pConn->Query("select "+TypeManip::CreateColumnList<ValuesIndices,Obj,0>()+
+      LoadQ=pConn->Query("select "+TypeManip::CreateColumnList<ValuesIndices,Obj,Features>()+
                          " from "+std::string(ObjInfo<Obj>::TableName)+" where "+
                          std::get<IDIndex>(ObjInfo<Obj>::info).ColumnName+std::string("=?1 and ")+
                          std::get<KeyIndex>(ObjInfo<Obj>::info).ColumnName+std::string(">=?2 and ")+
                          std::get<KeyIndex>(ObjInfo<Obj>::info).ColumnName+std::string("<=?3"),
                          "Archive1ID::Load()");
-      TypeManipSQL::BindOargs<0,Conn,0>(LoadQ,values);
+      TypeManipSQL::BindOargs<0,Conn,Features>(LoadQ,values);
       InsertQ=pConn->Query("insert into "+std::string(ObjInfo<Obj>::TableName)+"("+
-                           TypeManip::CreateColumnList<ValuesIndices,Obj,0>()+") values ("+
-                           TypeManip::CreatePlaceholderList<ValuesIndices,Obj,0>(1)+")",
+                           TypeManip::CreateColumnList<ValuesIndices,Obj,Features>()+") values ("+
+                           TypeManip::CreatePlaceholderList<ValuesIndices,Obj,Features>(1)+")",
                            "Archive1ID::Insert()");
       DeleteQ=pConn->Query("delete from "+std::string(ObjInfo<Obj>::TableName)+
                            " where "+std::get<IDIndex>(ObjInfo<Obj>::info).ColumnName+std::string("=?1 and ")+
@@ -209,8 +214,8 @@ public:
    void LoadStart(typename TypeManip::IthPropType<Obj,IDIndex> pParent,const KeyType& From,const KeyType& To)
    {
       LoadQ.arg(pParent->GetID());
-      TypeManip::TypeInfo<KeyType,0>::template Arg<Conn>(From,LoadQ);
-      TypeManip::TypeInfo<KeyType,0>::template Arg<Conn>(To,LoadQ);
+      TypeManip::TypeInfo<KeyType,Features>::template Arg<Conn>(From,LoadQ);
+      TypeManip::TypeInfo<KeyType,Features>::template Arg<Conn>(To,LoadQ);
       LoadQ.exec();
    }
 
@@ -229,8 +234,8 @@ public:
    {
       data.clear();
       LoadQ.arg(pParent->GetID());
-      TypeManip::TypeInfo<KeyType,0>::template Arg<Conn>(From,LoadQ);
-      TypeManip::TypeInfo<KeyType,0>::template Arg<Conn>(To,LoadQ);
+      TypeManip::TypeInfo<KeyType,Features>::template Arg<Conn>(From,LoadQ);
+      TypeManip::TypeInfo<KeyType,Features>::template Arg<Conn>(To,LoadQ);
       LoadQ.exec();
       while(LoadQ.next())
       {
@@ -243,8 +248,8 @@ public:
    void Delete(typename TypeManip::IthPropType<Obj,IDIndex> pParent,const KeyType& From,const KeyType& To)
    {
       DeleteQ.arg(pParent->GetID());
-      TypeManip::TypeInfo<KeyType,0>::template Arg<Conn>(From,DeleteQ);
-      TypeManip::TypeInfo<KeyType,0>::template Arg<Conn>(To,DeleteQ);
+      TypeManip::TypeInfo<KeyType,Features>::template Arg<Conn>(From,DeleteQ);
+      TypeManip::TypeInfo<KeyType,Features>::template Arg<Conn>(To,DeleteQ);
       DeleteQ.exec();
    }
 
@@ -256,14 +261,14 @@ public:
 
    void Insert(Obj& obj)
    {
-      TypeManipSQL::ArgAll<ValuesIndices,Conn,0>(&obj,InsertQ);
+      TypeManipSQL::ArgAll<ValuesIndices,Conn,Features>(&obj,InsertQ);
       InsertQ.exec();
    }
 
    void CheckTable()
    {
       DB::ConnectionBase::PLAINCOLUMNS cols;
-      TypeManipSQL::GetColumnInfo<Obj,0,ValuesIndices>(cols);
+      TypeManipSQL::GetColumnInfo<Obj,Features,ValuesIndices>(cols);
       pConn->CheckTable(ObjInfo<Obj>::TableName,cols,{std::string(std::get<IDIndex>(ObjInfo<Obj>::info).ColumnName),
                         std::string(std::get<KeyIndex>(ObjInfo<Obj>::info).ColumnName)});
    }

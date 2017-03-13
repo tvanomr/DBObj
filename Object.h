@@ -23,7 +23,7 @@ public:
 class YesIReallyWantToChangeObjectID
 {
 public:
-	void ChangeObjectID(Object* pObj,std::size_t NewID);
+   void ChangeObjectID(Object* pObj,std::size_t NewID){pObj->id=NewID;}
 };
 
 class Object

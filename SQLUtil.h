@@ -2,17 +2,20 @@
 #define __DBOBJ_SQL_UTIL_H__\
 
 #include "DBObj/Connection.h"
+#include "DBObj/Features.h"
 #include <vector>
 #include <memory>
+#include <type_traits>
 
 namespace DBObj
 {
 
-template<class Conn,std::size_t Features,std::size_t num>
+template<class Conn,std::size_t Features,std::size_t num,class Condition=void>
 class QueryStorage{};
 
-template<class Conn,std::size_t num>
-class QueryStorage<Conn,0,num>
+template<class Conn,std::size_t Features,std::size_t num>
+class QueryStorage<Conn,Features,num,
+      typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
 {
    typedef typename Connection<Conn,0>::DBQuery DBQuery;
    typedef std::vector<void*> VQPtr;

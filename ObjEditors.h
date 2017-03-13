@@ -19,17 +19,19 @@ namespace DBObj
 
 
 
-template<class Obj,class Conn>
-class ObjEditor<Obj,Conn,0>: public ObjEditorBase<0>
+template<class Obj,class Conn,std::size_t Features>
+class ObjEditor<Obj,Conn,Features,
+      typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+   : public ObjEditorBase<Features>
 {
 protected:
    template<bool val>
    friend class FillObjEditorsFillers;
-   Connection<Conn,0>* pConn;
+   Connection<Conn,Features>* pConn;
    typename Conn::DBQuery SaveQ;
    typename Conn::DBQuery SaveNewQ;
    typename Conn::DBQuery DeleteQ;
-   typename TypeManip::GetSpecialEditorT<Obj,0,Conn>::type SpecialEds;
+   typename TypeManip::GetSpecialEditorT<Obj,Features,Conn>::type SpecialEds;
 
    template<std::size_t index,class Inds>
    typename std::enable_if<index!=std::tuple_size<decltype(SpecialEds)>::value,void>::type CallCheckTable()
@@ -77,13 +79,13 @@ protected:
 
    // link manipulation implementation
    template<class GetF,class Type,std::size_t... ValueTypes>
-   void MarkDeletedChildrenMarker(Obj*,const PropInfo<GetF,Type,GenTempl::Values<ValueTypes...>>&,Editor<0>*)
+   void MarkDeletedChildrenMarker(Obj*,const PropInfo<GetF,Type,GenTempl::Values<ValueTypes...>>&,Editor<Features>*)
    {
 
    }
 
    template<class GetF,class Child,std::size_t index,std::size_t... ValueTypes>
-   void MarkDeletedChildrenMarker(Obj* pObj,const PropInfo<GetF,Children<Child,index>,GenTempl::Values<ValueTypes...>>& pi,Editor<0>* pEditor)
+   void MarkDeletedChildrenMarker(Obj* pObj,const PropInfo<GetF,Children<Child,index>,GenTempl::Values<ValueTypes...>>& pi,Editor<Features>* pEditor)
    {
       auto it=pi.Get(pObj).begin();
       auto end=pi.Get(pObj).end();
@@ -92,54 +94,55 @@ protected:
    }
 
    template<class GetF,class Key,class Child,std::size_t index,std::size_t... ValueTypes>
-   void MarkDeletedChidlrenMarker(Obj* pObj,const PropInfo<GetF,ChildrenMap<Key,Child,index>,GenTempl::Values<ValueTypes...>>& pi,Editor<0>* pEditor)
+   void MarkDeletedChidlrenMarker(Obj* pObj,const PropInfo<GetF,ChildrenMap<Key,Child,index>,GenTempl::Values<ValueTypes...>>& pi,Editor<Features>* pEditor)
    {
       auto it=pi.Get(pObj).begin();
       auto end=pi.Get(pObj).end();
       for(;it!=end;++it)
          pEditor->MarkDeleted(it->second);
-   }
+   }ObjEditor<Obj,Conn,
+   typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
 
 	template<std::size_t ind>
-	typename std::enable_if<(ind<NumProps),void>::type MarkDeletedChildrenImpl(Obj* pObj,Editor<0>* pEditor)
+   typename std::enable_if<(ind<NumProps),void>::type MarkDeletedChildrenImpl(Obj* pObj,Editor<Features>* pEditor)
 	{
 		MarkDeletedChildrenMarker(pObj,std::get<ind>(ObjInfo<Obj>::info),pEditor);
 		MarkDeletedChildrenImpl<ind+1>(pObj,pEditor);
 	}
 
 	template<std::size_t ind>
-	typename std::enable_if<(ind==NumProps),void>::type MarkDeletedChildrenImpl(Obj*,Editor<0>*)
+   typename std::enable_if<(ind==NumProps),void>::type MarkDeletedChildrenImpl(Obj*,Editor<Features>*)
 	{
 
 	}
 
    template<std::size_t size>
-   typename std::enable_if<size!=0,void>::type MarkDeletedChidlrenInterface(Obj* pObj,Editor<0>* pEditor)
+   typename std::enable_if<size!=0,void>::type MarkDeletedChidlrenInterface(Obj* pObj,Editor<Features>* pEditor)
    {
 		MarkDeletedChildrenImpl<0>(pObj,pEditor);
    }
 
    template<std::size_t size>
-   typename std::enable_if<size==0,void>::type MarkDeletedChildrenInterface(Obj *pObj,Editor<0>* pEditor)
+   typename std::enable_if<size==0,void>::type MarkDeletedChildrenInterface(Obj *pObj,Editor<Features>* pEditor)
    {
 
    }
 
    template<class GetF,class Type,std::size_t... ValueTypes>
-   void CutLinksCutter(Obj*,const PropInfo<GetF,Type,GenTempl::Values<ValueTypes...>>&,Editor<0>*)
+   void CutLinksCutter(Obj*,const PropInfo<GetF,Type,GenTempl::Values<ValueTypes...>>&,Editor<Features>*)
    {
 
    }
 
    template<std::size_t ind,class GetF,class Parent,std::size_t index,std::size_t... ValueTypes>
-   void CutLinksCutter(Obj* pObj,const PropInfo<GetF,ObjLink<Parent,Obj,index>,GenTempl::Values<ValueTypes...>>& pi,Editor<0>* pEditor)
+   void CutLinksCutter(Obj* pObj,const PropInfo<GetF,ObjLink<Parent,Obj,index>,GenTempl::Values<ValueTypes...>>& pi,Editor<Features>* pEditor)
    {
       pEditor->MarkChanged(pi.Get(pObj).Ptr());
       pi.Get(pObj)=nullptr;
    }
 
    template<std::size_t ind,class GetF,class Key,class Parent,std::size_t index,std::size_t... ValueTypes>
-   void CutLinksCutter(Obj* pObj,const PropInfo<GetF,MapLink<Key,Parent,Obj,index>,GenTempl::Values<ValueTypes...>>& pi,Editor<0>* pEditor)
+   void CutLinksCutter(Obj* pObj,const PropInfo<GetF,MapLink<Key,Parent,Obj,index>,GenTempl::Values<ValueTypes...>>& pi,Editor<Features>* pEditor)
    {
       pEditor->MarkChanged(pi.Get(pObj).Ptr());
       pi.Get(pObj).SetParent(nullptr);
@@ -147,7 +150,7 @@ protected:
 
 	template<std::size_t ind>
 	typename std::enable_if<(ind<NumProps),void>::type
-	CutLinksImpl(Obj* pObj,Editor<0>* pEditor)
+   CutLinksImpl(Obj* pObj,Editor<Features>* pEditor)
 	{
 		CutLinksCutter(pObj,std::get<ind>(ObjInfo<Obj>::info),pEditor);
 		CutLinksImpl<ind+1>(pObj,pEditor);
@@ -155,59 +158,63 @@ protected:
 
 	template<std::size_t ind>
 	typename std::enable_if<(ind==NumProps),void>::type
-	CutLinksImpl(Obj*,Editor<0>*)
+   CutLinksImpl(Obj*,Editor<Features>*)
 	{
 
 	}
 
    template<std::size_t size>
    typename std::enable_if<size!=0,void>::type
-   CutLinksInterface(Obj* pObj,Editor<0>* pEditor)
+   CutLinksInterface(Obj* pObj,Editor<Features>* pEditor)
    {
-		CutLinksImpl<0>(pObj,pEditor);
+      CutLinksImpl<Features>(pObj,pEditor);
    }
 
    template<std::size_t size>
    typename std::enable_if<size==0,void>::type
-   CutLinksInterface(Obj*,Editor<0>*)
+   CutLinksInterface(Obj*,Editor<Features>*)
    {
 
    }
 
 
 public:
-   void InitQueries(Connection<Conn,0>* pConnection);
+   void InitQueries(Connection<Conn,Features>* pConnection);
 
-   void Save(Object* pObj,Editor<0>* pEd) override;
-   void SaveNew(Object* pObj,Editor<0>* pEd) override;
-   void Delete(Object* pObj,Editor<0>* pEd) override;
+   void Save(Object* pObj,Editor<Features>* pEd) override;
+   void SaveNew(Object* pObj,Editor<Features>* pEd) override;
+   void Delete(Object* pObj,Editor<Features>* pEd) override;
    void ClearTable() override;
    void CheckTable() override;
-   void MarkDeletedChildren(Object *pObj, Editor<0> *pEd) override;
-   void CutLinks(Object *pObj, Editor<0> *pEd) override;
+   void MarkDeletedChildren(Object *pObj, Editor<Features> *pEd) override;
+   void CutLinks(Object *pObj, Editor<Features> *pEd) override;
    ~ObjEditor(){}
 };
 
-template<class Obj,class Conn>
-void ObjEditor<Obj,Conn,0>::InitQueries(Connection<Conn,0>* pConnection)
+template<class Obj,class Conn,std::size_t Features>
+void ObjEditor<Obj,Conn,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::InitQueries(Connection<Conn,0>* pConnection)
 {
    pConn=pConnection;
    SaveQ=pConn->Query(std::string("update ")+ObjInfo<Obj>::TableName+" set "+
-                      TypeManip::CreateUpdateList<ValueIndices,Obj,0>(2)+
+                      TypeManip::CreateUpdateList<ValueIndices,Obj,Features>(2)+
                       " where f_guid=?1","ObjEditor::Save()");
    SaveNewQ=pConn->Query(std::string("insert into ")+ObjInfo<Obj>::TableName+std::string(" (f_guid")+
                          std::string((GenTempl::HaveIndices<ValueIndices>::value!=0)?",":"")+
-                         TypeManip::CreateColumnList<ValueIndices,Obj,0>()+
+                         TypeManip::CreateColumnList<ValueIndices,Obj,Features>()+
                          std::string(") values (?1")+
                          std::string((GenTempl::HaveIndices<ValueIndices>::value!=0)?",":"")+
-                         TypeManip::CreatePlaceholderList<ValueIndices,Obj,0>(2)+
+                         TypeManip::CreatePlaceholderList<ValueIndices,Obj,Features>(2)+
                          ")","ObjEditor::SaveNew()");
    DeleteQ=pConn->Query(std::string("delete from ")+ObjInfo<Obj>::TableName+" where f_guid=?1","ObjEditor::Delete()");
    InitSpecialEds<0,typename TypeManip::GetSpecialEditorIndices<Obj,0,Conn>::type>();
 }
 
-template<class Obj,class Conn>
-void ObjEditor<Obj,Conn,0>::Save(Object* pObj,Editor<0>* pEd)
+template<class Obj,class Conn,std::size_t Features>
+void ObjEditor<Obj,Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::Save(Object* pObj,Editor<Features>* pEd)
 {
    pEd->SaveOne(pObj,Obj::ParentTypeID);
    SaveQ.arg(pObj->GetID());
@@ -216,18 +223,22 @@ void ObjEditor<Obj,Conn,0>::Save(Object* pObj,Editor<0>* pEd)
    SaveSpecial<0,typename TypeManip::GetSpecialEditorIndices<Obj,0,Conn>::type>(static_cast<Obj*>(pObj));
 }
 
-template<class Obj,class Conn>
-void ObjEditor<Obj,Conn,0>::SaveNew(Object* pObj,Editor<0>* pEd)
+template<class Obj,class Conn,std::size_t Features>
+void ObjEditor<Obj,Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::SaveNew(Object* pObj,Editor<Features>* pEd)
 {
    pEd->SaveOneNew(pObj,Obj::ParentTypeID);
    SaveNewQ.arg(pObj->GetID());
-   TypeManipSQL::ArgAll<ValueIndices,Conn,0>(static_cast<Obj*>(pObj),SaveNewQ);
+   TypeManipSQL::ArgAll<ValueIndices,Conn,Features>(static_cast<Obj*>(pObj),SaveNewQ);
    SaveNewQ.exec();
-   SaveSpecial<0,typename TypeManip::GetSpecialEditorIndices<Obj,0,Conn>::type>(static_cast<Obj*>(pObj));
+   SaveSpecial<0,typename TypeManip::GetSpecialEditorIndices<Obj,Features,Conn>::type>(static_cast<Obj*>(pObj));
 }
 
-template<class Obj,class Conn>
-void ObjEditor<Obj,Conn,0>::Delete(Object* pObj,Editor<0>* pEd)
+template<class Obj,class Conn,std::size_t Features>
+void ObjEditor<Obj,Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::Delete(Object* pObj,Editor<Features>* pEd)
 {
    DeleteQ.arg(pObj->GetID());
    DeleteQ.exec();
@@ -235,14 +246,18 @@ void ObjEditor<Obj,Conn,0>::Delete(Object* pObj,Editor<0>* pEd)
    DeleteSpecial<0>(static_cast<Obj*>(pObj));
 }
 
-template<class Obj,class Conn>
-void ObjEditor<Obj,Conn,0>::ClearTable()
+template<class Obj,class Conn,std::size_t Features>
+void ObjEditor<Obj,Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::ClearTable()
 {
    pConn->DirectExec(std::string("delete from ")+ObjInfo<Obj>::TableName,"ObjEditor::ClearTable()");
 }
 
-template<class Obj,class Conn>
-void ObjEditor<Obj,Conn,0>::CheckTable()
+template<class Obj,class Conn,std::size_t Features>
+void ObjEditor<Obj,Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::CheckTable()
 {
    DB::ConnectionBase::PLAINCOLUMNS cols;
    cols.push_back({std::string("f_guid"),DB::Types::TypeInteger});
@@ -251,42 +266,47 @@ void ObjEditor<Obj,Conn,0>::CheckTable()
    CallCheckTable<0,typename TypeManip::GetSpecialEditorIndices<Obj,0,Conn>::type>();
 }
 
-template<class Obj,class Conn>
-void ObjEditor<Obj,Conn,0>::MarkDeletedChildren(Object* pObj,Editor<0>* pEditor)
+template<class Obj,class Conn,std::size_t Features>
+void ObjEditor<Obj,Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::MarkDeletedChildren(Object* pObj,Editor<Features>* pEditor)
 {
    MarkDeletedChidlrenInterface<NumProps>(static_cast<Obj*>(pObj),pEditor);
 }
 
-template<class Obj,class Conn>
-void ObjEditor<Obj,Conn,0>::CutLinks(Object* pObj,Editor<0>* pEditor)
+template<class Obj,class Conn,std::size_t Features>
+void ObjEditor<Obj,Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::CutLinks(Object* pObj,Editor<Features>* pEditor)
 {
    CutLinksInterface<NumProps>(static_cast<Obj*>(pObj),pEditor);
 }
 
-template<bool bPresent>
+template<std::size_t Features,bool bPresent,class Condition=void>
 struct FillObjEditorsFillers
 {
 
 };
 
-template<>
-struct FillObjEditorsFillers<true>
+template<std::size_t Features>
+struct FillObjEditorsFillers<Features,true,
+      typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
 {
    template<std::size_t LastTypeID,class Conn>
    static typename std::enable_if<LastTypeID==TypeID::TypeInvalid,
-   std::vector<ObjEditorBase<0>*>>::type FillEditors(Connection<Conn,0>*)
+   std::vector<ObjEditorBase<Features>*>>::type FillEditors(Connection<Conn,Features>*)
    {
-      return std::vector<ObjEditorBase<0>*>();
+      return std::vector<ObjEditorBase<Features>*>();
    }
 
    template<std::size_t LastTypeID,class Conn>
    static typename std::enable_if<LastTypeID!=TypeID::TypeInvalid,
-   std::vector<ObjEditorBase<0>*>>::type FillEditors(Connection<Conn,0>* pConn)
+   std::vector<ObjEditorBase<Features>*>>::type FillEditors(Connection<Conn,Features>* pConn)
    {
-      std::vector<ObjEditorBase<0>*> ec=
-            std::move(FillObjEditorsFillers<ObjTypePresent<LastTypeID-1>::value>::template FillEditors<LastTypeID-1,Conn>(pConn));
-      ObjEditor<typename GetObjTypeByID<LastTypeID>::type,Conn,0>* pEditor=
-            new ObjEditor<typename GetObjTypeByID<LastTypeID>::type,Conn,0>();
+      std::vector<ObjEditorBase<Features>*> ec=
+            std::move(FillObjEditorsFillers<Features,ObjTypePresent<LastTypeID-1>::value>::template FillEditors<LastTypeID-1,Conn>(pConn));
+      ObjEditor<typename GetObjTypeByID<LastTypeID>::type,Conn,Features>* pEditor=
+            new ObjEditor<typename GetObjTypeByID<LastTypeID>::type,Conn,Features>();
       if(pEditor)
          pEditor->InitQueries(pConn);
       ec.push_back(pEditor);
@@ -295,35 +315,38 @@ struct FillObjEditorsFillers<true>
    }
 };
 
-template<>
-struct FillObjEditorsFillers<false>
+template<std::size_t Features>
+struct FillObjEditorsFillers<Features,false,
+      typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
 {
    template<std::size_t LastTypeID,class Conn>
    static typename std::enable_if<LastTypeID==TypeID::TypeInvalid,
-   std::vector<ObjEditorBase<0>*>>::type FillEditors(Connection<Conn,0>*)
+   std::vector<ObjEditorBase<Features>*>>::type FillEditors(Connection<Conn,Features>*)
    {
-      return std::vector<ObjEditorBase<0>*>();
+      return std::vector<ObjEditorBase<Features>*>();
    }
 
    template<std::size_t LastTypeID,class Conn>
    static typename std::enable_if<LastTypeID!=TypeID::TypeInvalid,
-   std::vector<ObjEditorBase<0>*>>::type FillEditors(Connection<Conn,0>* pConn)
+   std::vector<ObjEditorBase<Features>*>>::type FillEditors(Connection<Conn,Features>* pConn)
    {
-      std::vector<ObjEditorBase<0>*> ec=
-            std::move(FillObjEditorsFillers<ObjTypePresent<LastTypeID-1>::value>::template FillEditors<LastTypeID-1,Conn>(pConn));
+      std::vector<ObjEditorBase<Features>*> ec=
+            std::move(FillObjEditorsFillers<Features,ObjTypePresent<LastTypeID-1>::value>::template FillEditors<LastTypeID-1,Conn>(pConn));
       ec.push_back(nullptr);
       printd7("Not adding editor for type %u\n",LastTypeID);
       return ec;
    }
 };
 
-template<class Conn>
-void Editor<0>::Init(Connection<Conn,0>* pConnection)
+template<class Conn,std::size_t Features>
+void Editor<Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::Connections),void>::type>
+      ::Init(Connection<Conn,Features>* pConnection)
 {
-   std::unique_ptr<ObjectEditorGlue<Conn,0>> pGluePtr(new ObjectEditorGlue<Conn,0>);
+   std::unique_ptr<ObjectEditorGlue<Conn,Features>> pGluePtr(new ObjectEditorGlue<Conn,Features>);
    pGluePtr->InitQueries(pConnection);
    pGlue.reset(pGluePtr.release());
-   Editors=std::move(FillObjEditorsFillers<ObjTypePresent<1>::value>::template FillEditors<TypeID::TypeEnd,Conn>(pConnection));
+   Editors=std::move(FillObjEditorsFillers<Features,ObjTypePresent<1>::value>::template FillEditors<TypeID::TypeEnd,Conn>(pConnection));
 }
 
 

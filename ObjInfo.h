@@ -18,7 +18,7 @@ struct ValueType
       Ascend=2,
       Descend=3,
       Positive=5,
-      Title=4, //this property is the object title
+      Title=4, //this property is the object's title
       Key=10,
       KeyRange=10,
       Key2=11,

@@ -7,14 +7,16 @@
 
 namespace DBObj
 {
-template<class Conn,std::size_t Features>
+template<class Conn,std::size_t Features,class Condition=void>
 class Connection
 {
 
 };
 
-template<class Conn>
-class Connection<Conn,0> : public Conn
+template<class Conn,std::size_t Features>
+class Connection<Conn,Features,
+      typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+   : public Conn
 {
 protected:
 
@@ -23,18 +25,18 @@ protected:
    template<class _Key,class _Parent,class _Child,std::size_t _index,class _Conn,std::size_t _Features>
    friend class MapLinkLoader;
 
-	typedef std::vector<ObjLoaderBase<Conn,0>*> LoadersVec;
+   typedef std::vector<ObjLoaderBase<Conn,Features>*> LoadersVec;
 
 	template<std::size_t LastTypeID>
 	LoadersVec FillLoaders()
 	{
-		return FillLoadersFillers<Conn,0,ObjTypePresent<LastTypeID>::value>::template FillLoaders<LastTypeID>(this);
+      return FillLoadersFillers<Conn,Features,ObjTypePresent<LastTypeID>::value>::template FillLoaders<LastTypeID>(this);
 	}
 
 	class FirstObject: public Object
 	{
 	protected:
-		Connection<Conn,0>* pConn;
+      Connection<Conn,Features>* pConn;
 		std::size_t ObjTypeID;
 		Object* Load();
 	public:
@@ -49,7 +51,7 @@ protected:
 		}
 	};
 
-	std::vector<ObjLoaderBase<Conn,0>*> Loaders;
+   std::vector<ObjLoaderBase<Conn,Features>*> Loaders;
 	YesIReallyWantToChangeObjectID ChangeID;
 	typename Conn::DBQuery LoadObj;
 	std::size_t ObjTypeID;
@@ -69,7 +71,7 @@ public:
 	};
 	Connection();
 	~Connection();
-	ObjLoaderBase<Conn,0>* GetObjLoader(std::size_t TypeIDValue);
+   ObjLoaderBase<Conn,Features>* GetObjLoader(std::size_t TypeIDValue);
 	bool FillObj(std::size_t TypeIDValue,Object* pObj);
 	Object* GetObject(std::size_t ObjID);
 	template<class Obj>
@@ -78,7 +80,7 @@ public:
 	ObjPtr<Obj> GetObjPtr(std::size_t ObjID);
 	void AssignNewID(Object* pObj);
 
-   //slow (no delayed loading) but noone cares - not instantiated unless used since it's template function
+   //slow (no delayed loading)
    template<class Obj>
    void LoadAllObjectsOfType(std::vector<Obj*>& objects);
 
@@ -87,8 +89,10 @@ public:
    Object* NewObject(std::size_t ObjTypeID);
 };
 
-template<class Conn>
-Object* Connection<Conn,0>::FirstObject::Load()
+template<class Conn,std::size_t Features>
+Object* Connection<Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::FirstObject::Load()
 {
 	Object* pObj=pConn->GetObject(id);
    if(pObj)
@@ -104,15 +108,19 @@ Object* Connection<Conn,0>::FirstObject::Load()
 	return pObj;
 }
 
-template<class Conn>
-Connection<Conn,0>::Connection():Loaders(std::move(FillLoaders<TypeEnd>()))
+template<class Conn,std::size_t Features>
+Connection<Conn,Features,
+      typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::Connection():Loaders(std::move(FillLoaders<TypeEnd>()))
 {
 	LoadObj=this->Query("select f_type,f_enabled from tbl_object where f_guid=?1","Connection::GetObject()");
 	LoadObj.oarg(ObjTypeID,bEnabled);
 }
 
-template<class Conn>
-Connection<Conn,0>::~Connection()
+template<class Conn,std::size_t Features>
+Connection<Conn,Features,
+      typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::~Connection()
 {
 	for(auto ptr:Loaders)
 		if(ptr)
@@ -121,22 +129,28 @@ Connection<Conn,0>::~Connection()
 		delete obj.second;
 }
 
-template<class Conn>
-ObjLoaderBase<Conn,0>* Connection<Conn,0>::GetObjLoader(std::size_t TypeIDValue)
+template<class Conn,std::size_t Features>
+ObjLoaderBase<Conn,Features>* Connection<Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::GetObjLoader(std::size_t TypeIDValue)
 {
 	return (TypeIDValue<=Loaders.size()&&TypeIDValue>0)?Loaders[TypeIDValue-1]:nullptr;
 }
 
-template<class Conn>
-bool Connection<Conn,0>::FillObj(std::size_t TypeIDValue,Object* pObj)
+template<class Conn,std::size_t Features>
+bool Connection<Conn,Features,
+   typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+   ::FillObj(std::size_t TypeIDValue,Object* pObj)
 {
-	ObjLoaderBase<Conn,0>* pLoader;
+   ObjLoaderBase<Conn,Features>* pLoader;
 	return (pLoader=GetObjLoader(TypeIDValue))?pLoader->Fill(pObj):false;
 }
 
-template<class Conn>
+template<class Conn,std::size_t Features>
 template<class Obj>
-Obj* Connection<Conn,0>::GetTempPtr(std::size_t ObjID)
+Obj* Connection<Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::GetTempPtr(std::size_t ObjID)
 {
 	auto it=Objects.find(ObjID);
 	if(it!=Objects.end())
@@ -144,20 +158,24 @@ Obj* Connection<Conn,0>::GetTempPtr(std::size_t ObjID)
 	return reinterpret_cast<Obj*>(new FirstObject(ObjID,Obj::ObjTypeID,this));
 }
 
-template<class Conn>
+template<class Conn,std::size_t Features>
 template<class Obj>
-ObjPtr<Obj> Connection<Conn,0>::GetObjPtr(std::size_t ObjID)
+ObjPtr<Obj> Connection<Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::GetObjPtr(std::size_t ObjID)
 {
 	return ObjPtr<Obj>(GetTempPtr<Obj>(ObjID));
 }
 
-template<class Conn>
-Object* Connection<Conn,0>::GetObject(std::size_t ObjID)
+template<class Conn,std::size_t Features>
+Object* Connection<Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::GetObject(std::size_t ObjID)
 {
 	auto it=Objects.find(ObjID);
 	if(it!=Objects.end())
 		return it->second;
-	ObjLoaderBase<Conn,0>* pLoader;
+   ObjLoaderBase<Conn,Features>* pLoader;
 	LoadObj.arg(ObjID);
 	LoadObj.exec();
 	if(LoadObj.next())
@@ -187,9 +205,11 @@ Object* Connection<Conn,0>::GetObject(std::size_t ObjID)
 	return nullptr;
 }
 
-template<class Conn>
+template<class Conn,std::size_t Features>
 template<class Obj>
-void Connection<Conn,0>::LoadAllObjectsOfType(std::vector<Obj*>& objects)
+void Connection<Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::LoadAllObjectsOfType(std::vector<Obj*>& objects)
 {
    typename Conn::DBQuery query=this->Query(std::string("select f_guid from ")+ObjInfo<Obj>::TableName,
                                             std::string("Connection::LoadAllObjectsOfType()"));
@@ -206,16 +226,20 @@ void Connection<Conn,0>::LoadAllObjectsOfType(std::vector<Obj*>& objects)
    }
 }
 
-template<class Conn>
+template<class Conn,std::size_t Features>
 template<class Obj>
-Obj* Connection<Conn,0>::GetObject(std::size_t ObjID)
+Obj* Connection<Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::GetObject(std::size_t ObjID)
 {
 	Object* pObj=GetObject(ObjID);
 	return static_cast<Obj*>(pObj->Descends(Obj::ObjTypeID)?pObj:nullptr);
 }
 
-template<class Conn>
-void Connection<Conn,0>::RemoveObjectPtr(Object* pObj)
+template<class Conn,std::size_t Features>
+void Connection<Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::RemoveObjectPtr(Object* pObj)
 {
    if(pObj)
    {
@@ -226,10 +250,12 @@ void Connection<Conn,0>::RemoveObjectPtr(Object* pObj)
    }
 }
 
-template<class Conn>
-Object* Connection<Conn,0>::NewObject(std::size_t ObjTypeID)
+template<class Conn,std::size_t Features>
+Object* Connection<Conn,Features,
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+::NewObject(std::size_t ObjTypeID)
 {
-   ObjLoaderBase<Conn,0>* pLoader=GetObjLoader(ObjTypeID);
+   ObjLoaderBase<Conn,Features>* pLoader=GetObjLoader(ObjTypeID);
    return pLoader?pLoader->Create():nullptr;
 }
 
