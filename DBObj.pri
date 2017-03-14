@@ -24,6 +24,8 @@ HEADERS *= $$PWD/Object.h\
            $$PWD/ArchiveKey.h\
            $$PWD/Archive.h\
            $$PWD/SQLUtil.h\
-           $$PWD/Features.h
+           $$PWD/Features.h\
+           $$PWD/DebugPrint.h
 INCLUDEPATH*=$$PWD/..
 include($$PWD/Templates/Templates.pri)
+include($$PWD/DB/DB.pri)

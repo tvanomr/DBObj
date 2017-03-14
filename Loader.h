@@ -5,7 +5,6 @@
 #include "DBObj/Object.h"
 #include <vector>
 #include <string>
-#include "Debug/XDebug.h"
 #include "DBObj/ObjLink.h"
 #include "DBObj/MapLink.h"
 #include "DBObj/Types.h"

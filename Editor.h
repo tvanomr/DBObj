@@ -3,7 +3,7 @@
 
 #include "DBObj/Features.h"
 #include "DBObj/Connection.h"
-#include "DB/ConnectionBase/ConnectionBase.h"
+#include "DB/ConnectionBase.h"
 
 namespace DBObj
 {

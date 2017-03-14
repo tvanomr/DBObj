@@ -4,7 +4,7 @@
 #include <memory>
 #include "DBObj/TypeID.h"
 #include "DBObj/ObjInfo.h"
-#include "DB/ConnectionBase/Types.h"
+#include "DB/Types.h"
 
 namespace DBObj
 {

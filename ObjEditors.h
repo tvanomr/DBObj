@@ -10,7 +10,7 @@
 #include "DBObj/Editor.h"
 #include "DBObj/ObjInfoUtil.h"
 #include "DBObj/ObjInfoSQLUtil.h"
-#include "DB/ConnectionBase/ConnectionBase.h"
+#include "DB/ConnectionBase.h"
 #include "Templates/TupleManip.h"
 #include <string>
 

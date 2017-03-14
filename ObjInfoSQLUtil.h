@@ -2,7 +2,7 @@
 #define __DBOBJ_OBJINFO_SQL_UTIL_H__
 
 #include "DBObj/ObjInfoUtil.h"
-#include "DB/ConnectionBase/ConnectionBase.h"
+#include "DB/ConnectionBase.h"
 #include "Templates/TupleManip.h"
 
 namespace DBObj

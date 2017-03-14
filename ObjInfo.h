@@ -1,7 +1,7 @@
 #ifndef __DBOBJ_OBJINFO_H__
 #define __DBOBJ_OBJINFO_H__
 
-#include "DB/ConnectionBase/Types.h"
+#include "DB/Types.h"
 #include "Templates/Indices.h"
 #include <cstddef>
 #include <type_traits>
