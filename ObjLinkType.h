@@ -47,11 +47,11 @@ protected:
       static constexpr std::size_t value=ind;
    };
 
-   typename Conn::DBQuery LoadQ;
+   typename Connection<Conn,Features>::DBQuery LoadQ;
    std::size_t id;
-   Connection<Conn,0>* pConn;
+   Connection<Conn,Features>* pConn;
 public:
-   void InitQuery(Connection<Conn,0>* pConnection)
+   void InitQuery(Connection<Conn,Features>* pConnection)
    {
       pConn=pConnection;
       LoadQ=pConn->Query(std::string("select f_guid from ")+ObjInfo<Child>::TableName+std::string(" where ")+
@@ -88,12 +88,12 @@ struct TypeInfo<ObjLink<Parent,Child,index>,Features,
 {
    typedef std::tuple<std::size_t> IntType;
    template<class Conn,class Values,std::size_t _index>
-   static void MoveValue(ObjLink<Parent,Child,index>& value,Values& values,Connection<Conn,0>* pConn)
+   static void MoveValue(ObjLink<Parent,Child,index>& value,Values& values,Connection<Conn,Features>* pConn)
    {
       ObjLinkLoader<Parent,Child,index,Conn,0>::SetPtr(value,std::get<_index>(values),pConn);
    }
    template<class Conn>
-   static void Arg(const ObjLink<Parent,Child,index>& value,typename Connection<Conn,0>::DBQuery& query)
+   static void Arg(const ObjLink<Parent,Child,index>& value,typename Connection<Conn,Features>::DBQuery& query)
    {
       query.arg(value.GetID());
    }
@@ -106,13 +106,13 @@ struct TypeInfo<Children<Child,index>,Features,
    template<class Conn,class Parent>
    struct Special
    {
-      ChildrenLoader<Parent,Child,index,Conn,0> Loader;
+      ChildrenLoader<Parent,Child,index,Conn,Features> Loader;
       template<std::size_t ind>
-      void Init(Connection<Conn,0>* pConn)
+      void Init(Connection<Conn,Features>* pConn)
       {
          Loader.InitQuery(pConn);
       }
-      void InitProp(std::size_t,Children<Child,index>& prop,Connection<Conn,0>*)
+      void InitProp(std::size_t,Children<Child,index>& prop,Connection<Conn,Features>*)
       {
          Loader.Attach(prop);
       }

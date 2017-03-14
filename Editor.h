@@ -82,9 +82,9 @@ class ObjectEditorGlue<Conn,Features,
 protected:
    friend class Editor<Features>;
    Connection<Conn,Features>* pConn;
-   typename Conn::DBQuery SaveObjectQ;
-   typename Conn::DBQuery SaveNewObjectQ;
-   typename Conn::DBQuery DeleteObjectQ;
+   typename Connection<Conn,Features>::DBQuery SaveObjectQ;
+   typename Connection<Conn,Features>::DBQuery SaveNewObjectQ;
+   typename Connection<Conn,Features>::DBQuery DeleteObjectQ;
    void SaveObject(Object *pObj) override;
    void SaveNewObject(Object *pObj) override;
    void DeleteObject(Object *pObj) override;
@@ -189,7 +189,7 @@ template<class Conn,std::size_t Features>
 std::size_t ObjectEditorGlue<Conn,Features,
 typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>::GetMaxID()
 {
-   typename Conn::DBQuery query=pConn->Query("select max(f_guid) from tbl_object",
+   typename Connection<Conn,Features>::DBQuery query=pConn->Query("select max(f_guid) from tbl_object",
                                              "ObjectEditorGlue::GetMaxID()");
    std::size_t ret=0;
    query.oarg(ret);
@@ -201,7 +201,7 @@ template<class Conn,std::size_t Features>
 void ObjectEditorGlue<Conn,Features,
 typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>::GetDeletedIDs(std::vector<std::size_t>& vec)
 {
-   typename Conn::DBQuery query=pConn->Query("select f_guid from tbl_deleted_ids",
+   typename Connection<Conn,Features>::DBQuery query=pConn->Query("select f_guid from tbl_deleted_ids",
                                              "ObjectEditorGlue::GetDeletedIDs()");
    std::size_t id;
    query.oarg(id);
@@ -216,7 +216,7 @@ void ObjectEditorGlue<Conn,Features,
 typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>::SaveDeletedIDs(const std::vector<std::size_t>& vec)
 {
    pConn->DirectExec("delete from tbl_deleted_ids","ObjectEditorGlue::SaveDeletedIDs()");
-   typename Conn::DBQuery query=pConn->Query("insert into tbl_deleted_ids (f_guid) values (?1)",
+   typename Connection<Conn,Features>::DBQuery query=pConn->Query("insert into tbl_deleted_ids (f_guid) values (?1)",
                                              "ObjectEditorGlue::SaveDeletedIDs()");
    for(auto id:vec)
    {

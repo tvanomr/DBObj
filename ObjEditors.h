@@ -28,9 +28,9 @@ protected:
    template<bool val>
    friend class FillObjEditorsFillers;
    Connection<Conn,Features>* pConn;
-   typename Conn::DBQuery SaveQ;
-   typename Conn::DBQuery SaveNewQ;
-   typename Conn::DBQuery DeleteQ;
+   typename Connection<Conn,Features>::DBQuery SaveQ;
+   typename Connection<Conn,Features>::DBQuery SaveNewQ;
+   typename Connection<Conn,Features>::DBQuery DeleteQ;
    typename TypeManip::GetSpecialEditorT<Obj,Features,Conn>::type SpecialEds;
 
    template<std::size_t index,class Inds>

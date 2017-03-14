@@ -53,7 +53,7 @@ protected:
 
    std::vector<ObjLoaderBase<Conn,Features>*> Loaders;
 	YesIReallyWantToChangeObjectID ChangeID;
-	typename Conn::DBQuery LoadObj;
+   typename DBQuery LoadObj;
 	std::size_t ObjTypeID;
 	bool bEnabled;
 	std::map<std::size_t,Object*> Objects;
@@ -211,7 +211,7 @@ void Connection<Conn,Features,
 typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
 ::LoadAllObjectsOfType(std::vector<Obj*>& objects)
 {
-   typename Conn::DBQuery query=this->Query(std::string("select f_guid from ")+ObjInfo<Obj>::TableName,
+   typename DBQuery query=this->Query(std::string("select f_guid from ")+ObjInfo<Obj>::TableName,
                                             std::string("Connection::LoadAllObjectsOfType()"));
    std::size_t id=0;
    Obj* pObj;

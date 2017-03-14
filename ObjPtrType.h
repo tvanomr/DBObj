@@ -35,12 +35,12 @@ struct TypeInfo<Obj*,Features,
 {
    typedef std::tuple<std::size_t> IntType;
    template<class Conn,class Values,std::size_t index>
-   static void MoveValue(Obj*& value,Values& values,Connection<Conn,0>* pConn)
+   static void MoveValue(Obj*& value,Values& values,Connection<Conn,Features>* pConn)
    {
       value=pConn->template GetObject<Obj>(std::get<index>(values));
    }
    template<class Conn>
-   static void Arg(Obj* value,typename Connection<Conn,0>::DBQuery& query)
+   static void Arg(Obj* value,typename Connection<Conn,Features>::DBQuery& query)
    {
       query.arg(value->GetID());
    }

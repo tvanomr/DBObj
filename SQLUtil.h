@@ -17,7 +17,7 @@ template<class Conn,std::size_t Features,std::size_t num>
 class QueryStorage<Conn,Features,num,
       typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
 {
-   typedef typename Connection<Conn,0>::DBQuery DBQuery;
+   typedef typename Connection<Conn,Features>::DBQuery DBQuery;
    typedef std::vector<void*> VQPtr;
    std::vector<std::unique_ptr<DBQuery>> Queries;
    std::vector<std::unique_ptr<VQPtr>> Vectors;
@@ -51,7 +51,7 @@ class QueryStorage<Conn,Features,num,
    typename std::enable_if<value==ind,void>::type
    InnerArg(DBQuery* pQuery,const Type& Bound1,const Type& Bound2,const Types&...)
    {
-      TypeManipSQL::MassArg<Conn,0>(*pQuery,Bound1,Bound2);
+      TypeManipSQL::MassArg<Conn,Features>(*pQuery,Bound1,Bound2);
    }
 
    template<std::size_t value,std::size_t ind,std::size_t... inds,class Type,class... Types>
@@ -82,7 +82,7 @@ public:
       return FindQuery<typename GenTempl::SortUnique<inds...>::type>(pQueriesMap)!=nullptr;
    }
    template<class Obj,std::size_t Offset,std::size_t... inds,class T>
-   void CreateSelectQuery(Connection<Conn,0>& ConnRef,T& values,const std::string& QueryStart,const std::string& QueryEnd,std::string FuncName,std::size_t StartID=1,bool bNeedWhere=true)
+   void CreateSelectQuery(Connection<Conn,Features>& ConnRef,T& values,const std::string& QueryStart,const std::string& QueryEnd,std::string FuncName,std::size_t StartID=1,bool bNeedWhere=true)
    {
       void*& pQuery=FindQuery<typename GenTempl::SortUnique<inds...>::type>(pQueriesMap);
       if(!pQuery)
@@ -91,11 +91,11 @@ public:
          pQuery=Queries.back().get();
       }
       *static_cast<DBQuery*>(pQuery)=ConnRef.Query(QueryStart+DBObj::TypeManipSQL::GetRangeClause<Obj,typename TypeManip::GetPropIndicesByValues<Obj,typename GenTempl::Sub<typename GenTempl::Add<typename GenTempl::Revert<typename GenTempl::SortUnique<inds...>::type>::type,GenTempl::Values<Offset>>::type,GenTempl::Values<1>>::type>::type>(StartID,bNeedWhere)+QueryEnd,FuncName);
-      TypeManipSQL::BindOargs<0,Conn,0>(*static_cast<DBQuery*>(pQuery),values);
+      TypeManipSQL::BindOargs<0,Conn,Features>(*static_cast<DBQuery*>(pQuery),values);
    }
 
    template<class Obj,std::size_t Offset,std::size_t... inds>
-   void CreateDeleteQuery(Connection<Conn,0>& ConnRef,const std::string& QueryStart,const std::string& QueryEnd,std::string FuncName,std::size_t StartID=1,bool bNeedWhere=true)
+   void CreateDeleteQuery(Connection<Conn,Features>& ConnRef,const std::string& QueryStart,const std::string& QueryEnd,std::string FuncName,std::size_t StartID=1,bool bNeedWhere=true)
    {
       void*& pQuery=FindQuery<typename GenTempl::SortUnique<inds...>::type>(pQueriesMap);
       if(!pQuery)
@@ -107,7 +107,7 @@ public:
    }
 
    template<std::size_t... inds,class... Types>
-   typename std::enable_if<sizeof...(inds)*2==sizeof...(Types),typename Connection<Conn,0>::DBQuery*>::type
+   typename std::enable_if<sizeof...(inds)*2==sizeof...(Types),typename Connection<Conn,Features>::DBQuery*>::type
    ArgAndRun(const Types&... Boundaries)
    {
       DBQuery* pQuery=static_cast<DBQuery*>(FindQuery<typename GenTempl::SortUnique<inds...>::type>(pQueriesMap));

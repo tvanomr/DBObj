@@ -33,13 +33,13 @@ protected:
       static constexpr std::size_t value=ind;
    };
 
-   typename Conn::DBQuery LoadOneQ;
-   typename Conn::DBQuery LoadAllQ;
+   typename Connection<Conn,Features>::DBQuery LoadOneQ;
+   typename Connection<Conn,Features>::DBQuery LoadAllQ;
    std::size_t id;
    Key key;
    Connection<Conn,Features>* pConn;
 public:
-   void InitQueries(Connection<Conn,0>* pConnection);
+   void InitQueries(Connection<Conn,Features>* pConnection);
    Child* LoadOne(const Key&,std::size_t) override;
    void LoadAll(std::map<Key,Child*>&,std::size_t) override;
 };
@@ -47,7 +47,7 @@ public:
 template<class Key,class Parent,class Child,std::size_t index,class Conn,std::size_t Features>
 void ChildrenMapLoader<Key,Parent,Child,index,Conn,Features,
 typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
-::InitQueries(Connection<Conn,0>* pConnection)
+::InitQueries(Connection<Conn,Features>* pConnection)
 {
    pConn=pConnection;
    LoadOneQ=pConn->Query(std::string("select f_guid from ")+ObjInfo<Child>::TableName+
