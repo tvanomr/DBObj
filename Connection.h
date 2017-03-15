@@ -7,11 +7,6 @@
 
 namespace DBObj
 {
-template<class Conn,std::size_t Features,class Condition=void>
-class Connection
-{
-
-};
 
 template<class Conn,std::size_t Features>
 class Connection<Conn,Features,
@@ -20,9 +15,9 @@ class Connection<Conn,Features,
 {
 protected:
 
-	template<class Parent,class Child,std::size_t index,class _Conn,std::size_t _Features>
+   template<class Parent,class Child,std::size_t index,class _Conn,std::size_t _Features,class Condition>
 	friend class ObjLinkLoader;
-   template<class _Key,class _Parent,class _Child,std::size_t _index,class _Conn,std::size_t _Features>
+   template<class _Key,class _Parent,class _Child,std::size_t _index,class _Conn,std::size_t _Features,class Condition>
    friend class MapLinkLoader;
 
    typedef std::vector<ObjLoaderBase<Conn,Features>*> LoadersVec;
@@ -53,13 +48,14 @@ protected:
 
    std::vector<ObjLoaderBase<Conn,Features>*> Loaders;
 	YesIReallyWantToChangeObjectID ChangeID;
-   typename DBQuery LoadObj;
+   typename Conn::DBQuery LoadObj;
 	std::size_t ObjTypeID;
 	bool bEnabled;
 	std::map<std::size_t,Object*> Objects;
 	template<class Obj>
 	Obj* GetTempPtr(std::size_t ObjID);
 public:
+   using DBQuery=typename Conn::DBQuery;
 	template<class Type,class bPtr=void>
 	struct TypeFilter
 	{
@@ -211,7 +207,7 @@ void Connection<Conn,Features,
 typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
 ::LoadAllObjectsOfType(std::vector<Obj*>& objects)
 {
-   typename DBQuery query=this->Query(std::string("select f_guid from ")+ObjInfo<Obj>::TableName,
+   DBQuery query=this->Query(std::string("select f_guid from ")+ObjInfo<Obj>::TableName,
                                             std::string("Connection::LoadAllObjectsOfType()"));
    std::size_t id=0;
    Obj* pObj;

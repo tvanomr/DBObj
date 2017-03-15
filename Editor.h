@@ -8,9 +8,6 @@
 namespace DBObj
 {
 
-template<std::size_t Features>
-class Editor;
-
 template<class Obj,class Conn,std::size_t Features,class Condition=void>
 class ObjEditor
 {
@@ -105,7 +102,7 @@ class Editor<Features,
 {
 protected:
 
-   template<class Obj,class Conn,std::size_t Feat>
+   template<class Obj,class Conn,std::size_t Feat,class Condition>
    friend class ObjEditor;
 
    struct EditorData : public ObjectData
@@ -149,7 +146,7 @@ public:
 
 template<class Conn,std::size_t Features>
 void ObjectEditorGlue<Conn,Features,
-typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>::InitQueries(Connection<Conn,0>* pConnection)
+typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>::InitQueries(Connection<Conn,Features>* pConnection)
 {
    pConn=pConnection;
    SaveObjectQ=pConn->Query("update tbl_object set f_type=?2,f_enabled=?3 where f_guid=?1",
@@ -248,7 +245,8 @@ typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>:
 
 
 
-template<class Obj,std::size_t Features>
+template<std::size_t Features>
+template<class Obj>
 Obj* Editor<Features,
 typename std::enable_if<HaveFeature(Features,DBObj::Features::Connections),void>::type>::NewObject()
 {
@@ -263,7 +261,8 @@ typename std::enable_if<HaveFeature(Features,DBObj::Features::Connections),void>
    return pRet;
 }
 
-template<class Obj,std::size_t Features>
+template<std::size_t Features>
+template<class Obj>
 bool Editor<Features,
       typename std::enable_if<HaveFeature(Features,DBObj::Features::Connections),void>::type>::NewObject(Obj*& pObj)
 {
@@ -271,7 +270,8 @@ bool Editor<Features,
 }
 
 
-template<class Obj,std::size_t Features>
+template<std::size_t Features>
+template<class Obj>
 void Editor<Features,
       typename std::enable_if<HaveFeature(Features,DBObj::Features::Connections),void>::type>::ClearTable()
 {

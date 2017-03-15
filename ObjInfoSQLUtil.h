@@ -8,9 +8,6 @@
 namespace DBObj
 {
 
-template<class Conn,std::size_t Features>
-class Connection;
-
 namespace TypeManipSQL
 {
 

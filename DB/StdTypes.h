@@ -1,7 +1,7 @@
 #ifndef DB_STD_TYPES_H_
 #define DB_STD_TYPES_H_
 
-#include "DB/ConnectionBase/Types.h"
+#include "DBObj/DB/Types.h"
 #include <string>
 #include <chrono>
 

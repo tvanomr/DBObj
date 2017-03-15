@@ -10,8 +10,8 @@
 #include "DBObj/Editor.h"
 #include "DBObj/ObjInfoUtil.h"
 #include "DBObj/ObjInfoSQLUtil.h"
-#include "DB/ConnectionBase.h"
-#include "Templates/TupleManip.h"
+#include "DBObj/DB/ConnectionBase.h"
+#include "DBObj/Templates/TupleManip.h"
 #include <string>
 
 namespace DBObj
@@ -100,8 +100,7 @@ protected:
       auto end=pi.Get(pObj).end();
       for(;it!=end;++it)
          pEditor->MarkDeleted(it->second);
-   }ObjEditor<Obj,Conn,
-   typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
+   }
 
 	template<std::size_t ind>
    typename std::enable_if<(ind<NumProps),void>::type MarkDeletedChildrenImpl(Obj* pObj,Editor<Features>* pEditor)
@@ -192,9 +191,9 @@ public:
 };
 
 template<class Obj,class Conn,std::size_t Features>
-void ObjEditor<Obj,Conn,
+void ObjEditor<Obj,Conn,Features,
 typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
-::InitQueries(Connection<Conn,0>* pConnection)
+::InitQueries(Connection<Conn,Features>* pConnection)
 {
    pConn=pConnection;
    SaveQ=pConn->Query(std::string("update ")+ObjInfo<Obj>::TableName+" set "+
@@ -208,7 +207,7 @@ typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
                          TypeManip::CreatePlaceholderList<ValueIndices,Obj,Features>(2)+
                          ")","ObjEditor::SaveNew()");
    DeleteQ=pConn->Query(std::string("delete from ")+ObjInfo<Obj>::TableName+" where f_guid=?1","ObjEditor::Delete()");
-   InitSpecialEds<0,typename TypeManip::GetSpecialEditorIndices<Obj,0,Conn>::type>();
+   InitSpecialEds<0,typename TypeManip::GetSpecialEditorIndices<Obj,Features,Conn>::type>();
 }
 
 template<class Obj,class Conn,std::size_t Features>
@@ -218,7 +217,7 @@ typename std::enable_if<HaveFeature(Features,DBObj::Features::SQL),void>::type>
 {
    pEd->SaveOne(pObj,Obj::ParentTypeID);
    SaveQ.arg(pObj->GetID());
-   TypeManipSQL::ArgAll<ValueIndices,Conn,0>(static_cast<Obj*>(pObj),SaveQ);
+   TypeManipSQL::ArgAll<ValueIndices,Conn,Features>(static_cast<Obj*>(pObj),SaveQ);
    SaveQ.exec();
    SaveSpecial<0,typename TypeManip::GetSpecialEditorIndices<Obj,0,Conn>::type>(static_cast<Obj*>(pObj));
 }
@@ -338,7 +337,8 @@ struct FillObjEditorsFillers<Features,false,
    }
 };
 
-template<class Conn,std::size_t Features>
+template<std::size_t Features>
+template<class Conn>
 void Editor<Features,
 typename std::enable_if<HaveFeature(Features,DBObj::Features::Connections),void>::type>
       ::Init(Connection<Conn,Features>* pConnection)

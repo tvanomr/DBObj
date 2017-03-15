@@ -1,7 +1,7 @@
 #ifndef DBCONNECTIONBASE_H_
 #define DBCONNECTIONBASE_H_
 
-#include "DB/ConnectionBase/Types.h"
+#include "DBObj/DB/Types.h"
 #include <string>
 #include <vector>
 

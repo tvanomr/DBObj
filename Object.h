@@ -20,12 +20,6 @@ public:
 	virtual ~ObjectData(){}
 };
 
-class YesIReallyWantToChangeObjectID
-{
-public:
-   void ChangeObjectID(Object* pObj,std::size_t NewID){pObj->id=NewID;}
-};
-
 class Object
 {
 	template<class Obj>
@@ -78,6 +72,12 @@ public:
 	{
 		return pData.release();
 	}
+};
+
+class YesIReallyWantToChangeObjectID
+{
+public:
+   void ChangeObjectID(Object* pObj,std::size_t NewID){pObj->id=NewID;}
 };
 
 template<class Obj>

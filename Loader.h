@@ -15,10 +15,7 @@
 namespace DBObj
 {
 
-template<class Obj,std::size_t Features>
-class Connection;
-
-template<class Conn,std::size_t Features,bool Present>
+template<class Conn,std::size_t Features,bool Present,class Condition=void>
 class FillLoadersFillers;
 
 template <class Obj,class Conn,std::size_t Features,class Condition=void>
@@ -175,7 +172,7 @@ public:
 	static constexpr bool value=(sizeof(yes)==sizeof(test(static_cast<GetObjTypeByID<ObjTypeID>*>(nullptr))));
 };
 
-template<class Conn,std::size_t Features,bool Present,class Condition=void>
+template<class Conn,std::size_t Features,bool Present,class Condition>
 struct FillLoadersFillers
 {
 

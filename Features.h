@@ -14,7 +14,7 @@ enum class Features : std::size_t
 
 constexpr bool HaveFeature(std::size_t Feat,Features Req)
 {
-   return (Feat & Req)!=0
+   return (Feat & std::size_t(Req))!=0;
 }
 
 }

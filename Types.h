@@ -11,7 +11,7 @@
 namespace DBObj
 {
 
-template<class Conn,std::size_t Features>
+template<class Conn,std::size_t Features,class Condition=void>
 class Connection;
 
 namespace TypeManip

@@ -230,7 +230,7 @@ bool MapLink<Key,Parent,Child,index>::SetParent(Parent* pParentPtr)
 		{
 			Key key;
 			if(GetMap(pParent).FindChild(pChild,key))
-         {SpecialEds
+         {
 				if(pParentPtr)
 					if(!GetMap(pParentPtr).AddChild(key,pChild))
 						return false;
